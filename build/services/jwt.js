@@ -14,5 +14,13 @@ class JWTservices {
         const token = jsonwebtoken_1.default.sign(payload, JWT_SECRET);
         return token;
     }
+    static decodeToken(token) {
+        try {
+            return jsonwebtoken_1.default.verify(token, JWT_SECRET);
+        }
+        catch (error) {
+            return null;
+        }
+    }
 }
 exports.default = JWTservices;
