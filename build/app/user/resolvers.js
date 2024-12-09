@@ -62,4 +62,9 @@ const queries = {
         return user;
     })
 };
-exports.resolvers = { queries };
+const resolverForTweets = {
+    User: {
+        tweets: (parent) => db_1.prismaClient.tweet.findMany({ where: { authorld: parent.id } }),
+    }
+};
+exports.resolvers = { queries, resolverForTweets };
