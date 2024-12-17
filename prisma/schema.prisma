@@ -24,6 +24,9 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  follower  follows[] @relation("follower")
+  following follows[] @relation("following")
+
   tweets Tweet[]
 }
 
@@ -37,4 +40,14 @@ model Tweet {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model follows {
+  follower   User   @relation("follower", fields: [followerId], references: [id])
+  followerId String
+
+  following   User   @relation("following", fields: [followingId], references: [id])
+  followingId String
+
+  @@id([followerId, followingId])
 }

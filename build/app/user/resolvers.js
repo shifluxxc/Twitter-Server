@@ -13,39 +13,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.resolvers = void 0;
-const axios_1 = __importDefault(require("axios"));
 const db_1 = require("../../clients/db");
-const jwt_1 = __importDefault(require("../../services/jwt"));
+const user_1 = __importDefault(require("../../services/user"));
 const queries = {
     verifyGoogleToken: (parent_1, _a) => __awaiter(void 0, [parent_1, _a], void 0, function* (parent, { token }) {
-        const googleToken = token;
-        const googleOauthURL = new URL('https://oauth2.googleapis.com/tokeninfo');
-        googleOauthURL.searchParams.set('id_token', googleToken);
-        const { data } = yield axios_1.default.get(googleOauthURL.toString(), {
-            responseType: "json",
-        });
-        const user = yield db_1.prismaClient.user.findUnique({
-            where: {
-                email: data.email,
-            }
-        });
-        if (!user) {
-            yield db_1.prismaClient.user.create({
-                data: {
-                    email: data.email,
-                    firstName: data.given_name,
-                    lastName: data.family_name,
-                    profileImageURL: data.picture
-                }
-            });
-        }
-        const userInDB = yield db_1.prismaClient.user.findUnique({ where: { email: data.email } });
-        if (!userInDB) {
-            return new Error('User Not Found ');
-        }
-        const userToken = jwt_1.default.generateTokenForUser(userInDB);
-        console.log(data);
-        return userToken;
+        const Finaltoken = yield user_1.default.verifyGoogleAuthToken(token);
+        return Finaltoken;
     }),
     getCurrentUser: (parent, args, ctx) => __awaiter(void 0, void 0, void 0, function* () {
         var _a;
@@ -54,15 +27,11 @@ const queries = {
         if (!id) {
             return null;
         }
-        const user = db_1.prismaClient.user.findUnique({
-            where: {
-                id
-            }
-        });
+        const user = user_1.default.getUserByID(id);
         return user;
     }),
     getUserById: (parent_1, _a, ctx_1) => __awaiter(void 0, [parent_1, _a, ctx_1], void 0, function* (parent, { id }, ctx) {
-        const user = yield db_1.prismaClient.user.findUnique({ where: { id } });
+        const user = user_1.default.getUserByID(id);
         return user;
     })
 };
