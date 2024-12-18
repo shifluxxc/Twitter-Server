@@ -9,6 +9,8 @@ type User {
 
     follower : [User]
     following : [User]
+
+    recommendedUsers : [User]
     tweets : [Tweet]
 }
 

@@ -54,8 +54,30 @@ const resolverForTweets = {
             });
 
             return result.map((el) => el.following); 
+        }, 
+     
+        recommendedUsers: async (parent: User, _: any, ctx: GraphqlContext) => {
+            if (!ctx.user) return []; 
+            const myFollowing = await prismaClient.follows.findMany({
+                where: { followerId: ctx.user.id },
+                include: { following: { include: { follower: {include : {following : true}} } } } , 
+            })
+
+            const r_users: User[] = []; 
+            for (const followings of myFollowing)
+            {
+                for (const followingOfFollowedUser of followings.following.follower)
+                {
+                    if (followingOfFollowedUser.following.id !== ctx.user.id && (myFollowing.findIndex((e) => e.followingId === followingOfFollowedUser.following.id) < 0))
+                    {
+                        r_users.push(followingOfFollowedUser.following)
+                    }
+                }
+            }
+
+            return r_users; 
         } , 
-    }
+    } , 
 }
 
 const mutations = {
@@ -70,6 +92,6 @@ const mutations = {
         if (!ctx.user || !ctx.user.id) throw new Error('Unauthenticated')
         
         await UserService.unFollowUser(ctx.user.id, to); 
-    }
+    } , 
 }
 export const resolvers = { queries , resolverForTweets , mutations } ;

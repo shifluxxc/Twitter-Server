@@ -56,7 +56,24 @@ const resolverForTweets = {
             });
             return result.map((el) => el.following);
         }),
-    }
+        recommendedUsers: (parent, _, ctx) => __awaiter(void 0, void 0, void 0, function* () {
+            if (!ctx.user)
+                return [];
+            const myFollowing = yield db_1.prismaClient.follows.findMany({
+                where: { followerId: ctx.user.id },
+                include: { following: { include: { follower: { include: { following: true } } } } },
+            });
+            const r_users = [];
+            for (const followings of myFollowing) {
+                for (const followingOfFollowedUser of followings.following.follower) {
+                    if (followingOfFollowedUser.following.id !== ctx.user.id && (myFollowing.findIndex((e) => e.followingId === followingOfFollowedUser.following.id) < 0)) {
+                        r_users.push(followingOfFollowedUser.following);
+                    }
+                }
+            }
+            return r_users;
+        }),
+    },
 };
 const mutations = {
     followUser: (parent_1, _a, ctx_1) => __awaiter(void 0, [parent_1, _a, ctx_1], void 0, function* (parent, { to }, ctx) {
@@ -69,6 +86,6 @@ const mutations = {
         if (!ctx.user || !ctx.user.id)
             throw new Error('Unauthenticated');
         yield user_1.default.unFollowUser(ctx.user.id, to);
-    })
+    }),
 };
 exports.resolvers = { queries, resolverForTweets, mutations };
