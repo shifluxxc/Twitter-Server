@@ -7,6 +7,8 @@ type User {
     email: String!
     profileImageURL: String
 
+    follower : [User]
+    following : [User]
     tweets : [Tweet]
 }
 

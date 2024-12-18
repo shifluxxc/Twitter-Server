@@ -32,7 +32,44 @@ const queries = {
 const resolverForTweets = {
     User: {
         tweets: (parent: User) => 
-            prismaClient.tweet.findMany({ where: { authorld: parent.id } }) ,  
+            prismaClient.tweet.findMany({ where: { authorld: parent.id } }), 
+        
+        follower: async (parent: User) => {
+            const result = await prismaClient.follows.findMany({
+                where: { following: { id: parent.id } },
+                include: {
+                    follower: true,
+                },
+            });
+
+            return result.map((el) => el.follower); 
+        }, 
+        
+        following : async (parent: User) => {
+            const result = await prismaClient.follows.findMany({
+                where: { follower: { id: parent.id } },
+                include: {
+                    following: true,
+                },
+            });
+
+            return result.map((el) => el.following); 
+        } , 
     }
 }
-export const resolvers = { queries , resolverForTweets } ;
+
+const mutations = {
+    followUser: async (parent : any , {to} : {to : string} , ctx : GraphqlContext) => {
+        if (!ctx.user || !ctx.user.id) throw new Error('Unauthenticated')
+        
+        await UserService.followUser(ctx.user.id, to); 
+        return true; 
+    } , 
+
+    unFollowUser: async (parent: any, { to }: { to: string }, ctx: GraphqlContext) => {
+        if (!ctx.user || !ctx.user.id) throw new Error('Unauthenticated')
+        
+        await UserService.unFollowUser(ctx.user.id, to); 
+    }
+}
+export const resolvers = { queries , resolverForTweets , mutations } ;
