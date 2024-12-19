@@ -8,23 +8,21 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.resolvers = void 0;
 const db_1 = require("../../clients/db");
+const tweet_1 = __importDefault(require("../../services/tweet"));
 const queries = {
-    getAllTweets: () => db_1.prismaClient.tweet.findMany({ orderBy: { createdAt: 'desc' } })
+    getAllTweets: () => __awaiter(void 0, void 0, void 0, function* () { return yield tweet_1.default.getAllTweets(); })
 };
 const mutations = {
     createTweet: (parent_1, _a, ctx_1) => __awaiter(void 0, [parent_1, _a, ctx_1], void 0, function* (parent, { payload }, ctx) {
         if (!ctx.user)
             throw new Error("You are not authenticated ");
-        const tweet = yield db_1.prismaClient.tweet.create({
-            data: {
-                content: payload.content,
-                imageURL: payload === null || payload === void 0 ? void 0 : payload.imageURL,
-                author: { connect: { id: ctx.user.id } }
-            },
-        });
+        const tweet = tweet_1.default.CreateTweet(payload, ctx.user.id);
         return tweet;
     })
 };

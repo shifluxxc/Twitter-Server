@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.resolvers = void 0;
 const db_1 = require("../../clients/db");
 const user_1 = __importDefault(require("../../services/user"));
+const redis_1 = require("../../clients/redis");
 const queries = {
     verifyGoogleToken: (parent_1, _a) => __awaiter(void 0, [parent_1, _a], void 0, function* (parent, { token }) {
         const Finaltoken = yield user_1.default.verifyGoogleAuthToken(token);
@@ -22,7 +23,6 @@ const queries = {
     }),
     getCurrentUser: (parent, args, ctx) => __awaiter(void 0, void 0, void 0, function* () {
         var _a;
-        console.log(ctx);
         const id = (_a = ctx.user) === null || _a === void 0 ? void 0 : _a.id;
         if (!id) {
             return null;
@@ -59,6 +59,10 @@ const resolverForTweets = {
         recommendedUsers: (parent, _, ctx) => __awaiter(void 0, void 0, void 0, function* () {
             if (!ctx.user)
                 return [];
+            const cachedValue = yield redis_1.redisClient.get(`RECOMMENDED_USER:${ctx.user.id}`);
+            if (cachedValue) {
+                return JSON.parse(cachedValue);
+            }
             const myFollowing = yield db_1.prismaClient.follows.findMany({
                 where: { followerId: ctx.user.id },
                 include: { following: { include: { follower: { include: { following: true } } } } },
@@ -71,6 +75,7 @@ const resolverForTweets = {
                     }
                 }
             }
+            yield redis_1.redisClient.set(`RECOMMENDED_USER:${ctx.user.id}`, JSON.stringify(r_users));
             return r_users;
         }),
     },
@@ -80,12 +85,14 @@ const mutations = {
         if (!ctx.user || !ctx.user.id)
             throw new Error('Unauthenticated');
         yield user_1.default.followUser(ctx.user.id, to);
+        yield redis_1.redisClient.del(`RECOMMENDED_USER:${ctx.user.id}`);
         return true;
     }),
     unFollowUser: (parent_1, _a, ctx_1) => __awaiter(void 0, [parent_1, _a, ctx_1], void 0, function* (parent, { to }, ctx) {
         if (!ctx.user || !ctx.user.id)
             throw new Error('Unauthenticated');
         yield user_1.default.unFollowUser(ctx.user.id, to);
+        yield redis_1.redisClient.del(`RECOMMENDED_USER:${ctx.user.id}`);
     }),
 };
 exports.resolvers = { queries, resolverForTweets, mutations };

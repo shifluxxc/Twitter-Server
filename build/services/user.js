@@ -44,7 +44,6 @@ class UserService {
                 return new Error('User Not Found ');
             }
             const userToken = jwt_1.default.generateTokenForUser(userInDB);
-            console.log(data);
             return userToken;
         });
     }

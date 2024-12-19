@@ -57,8 +57,6 @@ class UserService {
             return new Error('User Not Found ');
         }
         const userToken = JWTservices.generateTokenForUser(userInDB);
-
-        console.log(data);
         return userToken;
     }
 
